@@ -20,6 +20,8 @@
     "express": "^4.16.4",
     "sqlite3": "^4.0.6",
     "swagger-ui-express": "^4.2.0",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.5",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
