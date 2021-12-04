@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "mocha tests",
+    "test": "nyc mocha tests",
     "start": "node index.js"
   },
   "keywords": [
@@ -20,10 +20,18 @@
     "express": "^4.16.4",
     "sqlite3": "^4.0.6",
     "swagger-ui-express": "^4.2.0",
+    "winston": "^3.3.3",
+    "winston-daily-rotate-file": "^4.5.5",
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "eslint": "^8.4.0",
     "mocha": "^6.1.4",
+    "nyc": "^15.1.0",
+    "pre-push": "^0.1.1",
     "supertest": "^4.0.2"
-  }
+  },
+  "pre-push": [
+    "test"
+  ]
 }
