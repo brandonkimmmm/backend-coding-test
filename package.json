@@ -23,6 +23,7 @@
     "yamljs": "^0.3.0"
   },
   "devDependencies": {
+    "eslint": "^8.4.0",
     "mocha": "^6.1.4",
     "supertest": "^4.0.2"
   }
