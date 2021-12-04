@@ -1,0 +1,123 @@
+openapi: 3.0.0
+info:
+  title: Backend Coding Test
+  description: An API server that keeps track of rides taken. A ride's starting location, ending location, driver name, rider name, and vehicle used can be stored.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8010
+paths:
+  /health:
+    get:
+      summary: Returns the health of the server
+      responses:
+        '200':
+          description: Returned if the server is running
+          content:
+            text/html:
+              schema:
+                type: string
+                example: Healthy
+  /rides:
+    get:
+      summary: Get all ride data entries
+      responses:
+        '200':
+          description: Newly created ride
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ride"
+    post:
+      summary: Add a new ride data entry
+      requestBody:
+        description: New ride information
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - start_lat
+                - end_lat
+                - start_long
+                - end_long
+                - rider_name
+                - driver_name
+                - driver_vehicle
+              properties:
+                start_lat:
+                  type: integer
+                  minimum: -90
+                  maximum: 90
+                end_lat:
+                  type: integer
+                  minimum: -90
+                  maximum: 90
+                start_long:
+                  type: integer
+                  minimum: -180
+                  maximum: 180
+                end_long:
+                  type: integer
+                  minimum: -180
+                  maximum: 180
+                rider_name:
+                  type: string
+                  minLength: 1
+                driver_name:
+                  type: string
+                  minLength: 1
+                driver_vehicle:
+                  type: string
+                  minLength: 1
+              example:
+                start_lat: -70,
+                start_long: -100,
+                end_lat: 89,
+                end_long: -1,
+                rider_name: brandon,
+                driver_name: john,
+                driver_vehicle: 400z
+      responses:
+        '200':
+          description: Newly created ride
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ride"
+components:
+  schemas:
+    Ride:
+      type: object
+      properties:
+        rideID:
+          type: integer
+        start_lat:
+          type: integer
+        end_lat:
+          type: integer
+        start_long:
+          type: integer
+        end_long:
+          type: integer
+        rider_name:
+          type: string
+        driver_name:
+          type: string
+        driver_vehicle:
+          type: string
+        created:
+          type: string
+          format: date
+      example:
+        rideID: 1,
+        startLat: -70,
+        startLong: -100,
+        endLat: 89,
+        endLong: -1,
+        riderName: brandon,
+        driverName: john,
+        driverVehicle: 400z,
+        created: "2021-12-04 07:53:15"
