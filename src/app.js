@@ -2,13 +2,27 @@
 
 const express = require('express');
 const app = express();
-
+const { nanoid } = require('nanoid');
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
 const logger = require('../utils/logger');
 const { isInteger } = require('lodash');
 
 module.exports = (db) => {
+	app.use((req, res, next) => {
+		req.nanoid = nanoid();
+		logger.info(
+			req.nanoid,
+			'middleware/hostname',
+			req.hostname,
+			req.headers['x-real-ip'],
+			req.headers['x-real-origin'],
+			req.method,
+			req.path
+		);
+		next();
+	});
+
 	app.get('/health', (req, res) => res.send('Healthy'));
 
 	app.post('/rides', jsonParser, (req, res) => {
