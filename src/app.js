@@ -5,6 +5,8 @@ const app = express();
 
 const bodyParser = require('body-parser');
 const jsonParser = bodyParser.json();
+const logger = require('../utils/logger');
+const { isInteger } = require('lodash');
 
 module.exports = (db) => {
 	app.get('/health', (req, res) => res.send('Healthy'));
@@ -76,24 +78,46 @@ module.exports = (db) => {
 		});
 	});
 
-	app.get('/rides', (req, res) => {
-		db.all('SELECT * FROM Rides', function (err, rows) {
-			if (err) {
-				return res.send({
-					error_code: 'SERVER_ERROR',
-					message: 'Unknown error'
-				});
-			}
+	app.get('/rides', async (req, res) => {
+		let limit = req.query.limit ? parseInt(req.query.limit) : 50;
+		let page = req.query.page ? parseInt(req.query.page) : 1;
 
-			if (rows.length === 0) {
+		logger.info(`GET /rides limit: ${limit} page: ${page}`);
+
+		if (!isInteger(limit) || limit < 0 || limit > 50) {
+			limit = 50;
+		}
+
+		if (!isInteger(page) || page <= 0) {
+			page = 1;
+		}
+
+		const offset = limit * (page - 1);
+
+		try {
+			const { count } = await db.getAsync('SELECT COUNT(RideID) AS count FROM Rides');
+
+			if (count === 0) {
 				return res.send({
 					error_code: 'RIDES_NOT_FOUND_ERROR',
 					message: 'Could not find any rides'
 				});
 			}
 
-			res.send(rows);
-		});
+			const rows = await db.allAsync('SELECT * FROM Rides ORDER BY rideID DESC LIMIT ? OFFSET ?', [limit, offset]);
+
+			return res.send({
+				count,
+				rows
+			});
+		} catch (err) {
+			logger.error(`GET /rides error: ${err.message}`);
+
+			return res.send({
+				error_code: 'SERVER_ERROR',
+				message: 'Unknown error'
+			});
+		}
 	});
 
 	app.get('/rides/:id', (req, res) => {
