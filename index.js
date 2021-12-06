@@ -2,9 +2,11 @@
 
 const port = 8010;
 const logger = require('./utils/logger');
+const { promisifyAll } = require('bluebird');
 
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database(':memory:');
+promisifyAll(db);
 
 const buildSchemas = require('./src/schemas');
 
