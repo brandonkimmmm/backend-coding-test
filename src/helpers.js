@@ -2,30 +2,45 @@
 
 const { db } = require('../tools/database');
 const Promise = require('bluebird');
+const { rideSchema, paginationSchema, rideIdSchema } = require('../tools/schemas');
 
 const createRide = (
-	startLat,
-	startLong,
-	endLat,
-	endLong,
-	riderName,
-	driverName,
-	driverVehicle,
+	start_lat,
+	start_long,
+	end_lat,
+	end_long,
+	rider_name,
+	driver_name,
+	driver_vehicle,
 	opts = {
 		returning: true
 	}
 ) => {
 	return new Promise((resolve, reject) => {
+		const validation = rideSchema.validate({
+			start_lat,
+			start_long,
+			end_lat,
+			end_long,
+			rider_name,
+			driver_name,
+			driver_vehicle
+		});
+
+		if (validation.error) {
+			return reject(new Error(validation.error));
+		}
+
 		db.run(
 			'INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)',
 			[
-				startLat,
-				startLong,
-				endLat,
-				endLong,
-				riderName,
-				driverName,
-				driverVehicle
+				start_lat,
+				start_long,
+				end_lat,
+				end_long,
+				rider_name,
+				driver_name,
+				driver_vehicle
 			],
 			function (err) {
 				if (err) {
@@ -54,6 +69,8 @@ const countRides = async () => {
 };
 
 const getPaginatedRides = async (limit = 50, page = 1) => {
+	await paginationSchema.validateAsync({ limit, page });
+
 	const offset = limit * (page - 1);
 
 	const rows = await db.allAsync('SELECT * FROM Rides ORDER BY rideID DESC LIMIT ? OFFSET ?', [limit, offset]);
@@ -61,8 +78,10 @@ const getPaginatedRides = async (limit = 50, page = 1) => {
 	return rows;
 };
 
-const getRide = async (rideID) => {
-	const ride = await db.getAsync('SELECT * FROM Rides WHERE rideID=?', rideID);
+const getRide = async (id) => {
+	await rideIdSchema.validateAsync({ id });
+
+	const ride = await db.getAsync('SELECT * FROM Rides WHERE rideID=?', id);
 
 	return ride;
 };
