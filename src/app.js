@@ -84,7 +84,7 @@ module.exports = (db) => {
 
 		logger.info(`GET /rides limit: ${limit} page: ${page}`);
 
-		if (!isInteger(limit) || limit < 0 || limit > 50) {
+		if (!isInteger(limit) || limit <= 0 || limit > 50) {
 			limit = 50;
 		}
 

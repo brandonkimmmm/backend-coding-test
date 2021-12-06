@@ -20,15 +20,39 @@ paths:
   /rides:
     get:
       summary: Get all ride data entries
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 50
+          required: false
+          description: The number of items to return
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          required: false
+          description: The page to return
       responses:
         '200':
           description: Newly created ride
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Ride"
+                type: object
+                properties:
+                  count:
+                    type: integer
+                    example: 1
+                  rows:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Ride"
     post:
       summary: Add a new ride data entry
       requestBody:
