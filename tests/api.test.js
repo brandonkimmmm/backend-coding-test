@@ -3,17 +3,19 @@
 const request = require('supertest');
 const lodash = require('lodash');
 const { expect } = require('chai');
+const { promisifyAll } = require('bluebird');
 
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database(':memory:');
+promisifyAll(db);
 
 const app = require('../src/app')(db);
 const buildSchemas = require('../src/schemas');
 
 const MOCK_RIDE = {
 	startLat: -70,
-	endLat: 89,
 	startLong: -100,
+	endLat: 89,
 	endLong: -1,
 	riderName: 'brandon',
 	driverName: 'john',
@@ -28,6 +30,10 @@ describe('API tests', () => {
 			}
 
 			buildSchemas(db);
+
+			for (let i = 0; i < 50; i++) {
+				db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', Object.values(MOCK_RIDE))
+			}
 
 			done();
 		});
@@ -199,15 +205,64 @@ describe('API tests', () => {
 				.expect('Content-Type', /json/)
 				.expect(200)
 				.expect((res) => {
-					expect(res.body).to.be.an('array');
-					expect(res.body[0]).to.be.an('object');
+					expect(res.body).to.be.an('object');
+					expect(res.body).to.have.property('count');
+					expect(res.body).to.have.property('rows');
+					expect(res.body.count).to.equal(51);
+					expect(res.body.rows).to.be.an('array');
+					expect(res.body.rows.length).to.equal(50);
+					expect(res.body.rows[0]).to.be.an('object');
 
 					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body[0], ['rideID', 'created']),
+						lodash.omit(res.body.rows[0], ['rideID', 'created']),
 						(value, key) => lodash.camelCase(key)
 					);
 
 					expect(formattedResponse).to.deep.equal(MOCK_RIDE);
+				})
+				.end(done);
+		});
+
+		it('should only return 20 rows when limit 20 is given', (done) => {
+			request(app)
+				.get('/rides')
+				.query({ limit: 20 })
+				.expect('Content-Type', /json/)
+				.expect(200)
+				.expect((res) => {
+					expect(res.body).to.be.an('object');
+					expect(res.body).to.have.property('count');
+					expect(res.body).to.have.property('rows');
+					expect(res.body.count).to.equal(51);
+					expect(res.body.rows).to.be.an('array');
+					expect(res.body.rows.length).to.equal(20);
+					expect(res.body.rows[0]).to.be.an('object');
+
+					const formattedResponse = lodash.mapKeys(
+						lodash.omit(res.body.rows[0], ['rideID', 'created']),
+						(value, key) => lodash.camelCase(key)
+					);
+
+					expect(formattedResponse).to.deep.equal(MOCK_RIDE);
+				})
+				.end(done);
+		});
+
+		it('should only return third page when page 3 is given', (done) => {
+			request(app)
+				.get('/rides')
+				.query({ limit: 1, page: 3 })
+				.expect('Content-Type', /json/)
+				.expect(200)
+				.expect((res) => {
+					expect(res.body).to.be.an('object');
+					expect(res.body).to.have.property('count');
+					expect(res.body).to.have.property('rows');
+					expect(res.body.count).to.equal(51);
+					expect(res.body.rows).to.be.an('array');
+					expect(res.body.rows.length).to.equal(1);
+					expect(res.body.rows[0]).to.be.an('object');
+					expect(res.body.rows[0].rideID).to.equal(49);
 				})
 				.end(done);
 		});
