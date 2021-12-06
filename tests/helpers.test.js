@@ -45,6 +45,20 @@ describe('Helper tests', () => {
 	});
 
 	describe('#createRide', () => {
+		it('should not allow SQL injection', async () => {
+			const ride = await createRide(
+				MOCK_RIDE.startLat,
+				MOCK_RIDE.startLong,
+				MOCK_RIDE.endLat,
+				MOCK_RIDE.endLong,
+				MOCK_RIDE.riderName,
+				MOCK_RIDE.driverName,
+				'); DROP TABLE Rides; --'
+			);
+
+			expect(lodash.omit(ride, ['rideID', 'created'])).to.deep.equal({ ...MOCK_RIDE, driverVehicle: '); DROP TABLE Rides; --' });
+		});
+
 		it('should create a new ride and return data', async () => {
 			const ride = await createRide(
 				MOCK_RIDE.startLat,
@@ -149,6 +163,18 @@ describe('Helper tests', () => {
 
 			expect(error.message).to.equal('ID must be an integer greater than 0');
 		});
+
+		it('should not allow SQL injection', async () => {
+			let error;
+
+			try {
+				await getRide('1 OR 1=1');
+			} catch (err) {
+				error = err;
+			}
+
+			expect(error.message).to.equal('ID must be an integer greater than 0');
+		});
 	});
 
 	describe('#coutnRides', () => {
@@ -202,6 +228,18 @@ describe('Helper tests', () => {
 			}
 
 			expect(error.message).to.equal('Page must be an integer greater than 0');
+		});
+
+		it('should not allow SQL injection', async () => {
+			let error;
+
+			try {
+				await getPaginatedRides('1; DROP TABLE Rides');
+			} catch (err) {
+				error = err;
+			}
+
+			expect(error.message).to.equal('Limit must be an integer between 1 and 50');
 		});
 	});
 });
