@@ -17,6 +17,30 @@ paths:
               schema:
                 type: string
                 example: Healthy
+  /rides/:id:
+    get:
+      summary: Get a specific Ride via ID
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+          description: ID of ride to get
+      responses:
+        '200':
+          description: Queried Ride
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ride'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
   /rides:
     get:
       summary: Get all ride data entries
@@ -40,7 +64,7 @@ paths:
           description: The page to return
       responses:
         '200':
-          description: Newly created ride
+          description: Queried Rides
           content:
             application/json:
               schema:
@@ -52,7 +76,13 @@ paths:
                   rows:
                     type: array
                     items:
-                      $ref: "#/components/schemas/Ride"
+                      $ref: '#/components/schemas/Ride'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
     post:
       summary: Add a new ride data entry
       requestBody:
@@ -105,12 +135,18 @@ paths:
                 driver_name: john,
                 driver_vehicle: 400z
       responses:
-        '200':
+        '201':
           description: Newly created ride
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Ride"
+                $ref: '#/components/schemas/Ride'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/ServerError'
 components:
   schemas:
     Ride:
@@ -144,4 +180,47 @@ components:
         riderName: brandon,
         driverName: john,
         driverVehicle: 400z,
-        created: "2021-12-04 07:53:15"
+        created: 2021-12-04 07:53:15
+  responses:
+    NotFoundError:
+      description: Users Not Found Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error_code:
+                type: string
+              message:
+                type: string
+            example:
+              error_code: RIDES_NOT_FOUND_ERROR
+              message: Could not find any rides
+    ValidationError:
+      description: Validation Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error_code:
+                type: string
+              message:
+                type: string
+            example:
+              error_code: VALIDATION_ERROR
+              message: Driver vehicle must be a non empty string
+    ServerError:
+      description: Server Error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error_code:
+                type: string
+              message:
+                type: string
+            example:
+              error_code: SERVER_ERROR
+              message: Unknown error

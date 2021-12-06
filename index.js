@@ -1,25 +1,25 @@
 'use strict';
 
 const port = 8010;
-const logger = require('./utils/logger');
-const { promisifyAll } = require('bluebird');
+const logger = require('./tools/logger');
+const { initDb } = require('./tools/database');
+const initApp = require('./src/app');
 
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database(':memory:');
-promisifyAll(db);
+(async () => {
+	try {
+		logger.info('index.js Initializing app');
 
-const buildSchemas = require('./src/schemas');
+		initDb();
 
-const swaggerUi = require('swagger-ui-express');
-const YAML = require('yamljs');
-const swaggerDocument = YAML.load('./src/swagger.yaml');
+		const app = initApp();
 
-db.serialize(() => {
-	buildSchemas(db);
+		app.listen(port, () => logger.info(`index.js App initialized and listening on port ${port}`));
+	} catch (err) {
+		logger.error(
+			'index.js Error during app initialization',
+			err.message
+		);
 
-	const app = require('./src/app')(db);
-
-	app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
-	app.listen(port, () => logger.info(`App started and listening on port ${port}`));
-});
+		process.exit(0);
+	}
+})();

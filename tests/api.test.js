@@ -3,14 +3,9 @@
 const request = require('supertest');
 const lodash = require('lodash');
 const { expect } = require('chai');
-const { promisifyAll } = require('bluebird');
-
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database(':memory:');
-promisifyAll(db);
-
-const app = require('../src/app')(db);
-const buildSchemas = require('../src/schemas');
+const { initDb, db } = require('../tools/database');
+const initApp = require('../src/app');
+let app;
 
 const MOCK_RIDE = {
 	startLat: -70,
@@ -29,13 +24,35 @@ describe('API tests', () => {
 				return done(err);
 			}
 
-			buildSchemas(db);
+			initDb();
+			app = initApp();
 
 			for (let i = 0; i < 50; i++) {
-				db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', Object.values(MOCK_RIDE))
+				db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', Object.values(MOCK_RIDE));
 			}
 
 			done();
+		});
+	});
+
+	after((done) => {
+		db.serialize((err) => {
+			if (err) {
+				return done(err);
+			}
+
+			db.run('DROP TABLE Rides');
+
+			done();
+		});
+	});
+
+	describe('GET /api-docs', () => {
+		it('should return renderd swagger ui', (done) => {
+			request(app)
+				.get('/api-docs')
+				.expect('Content-Type', /html/)
+				.expect(301, done);
 		});
 	});
 
@@ -43,7 +60,7 @@ describe('API tests', () => {
 		it('should return health', (done) => {
 			request(app)
 				.get('/health')
-				.expect('Content-Type', /text/)
+				.expect('Content-Type', /html/)
 				.expect(200, done);
 		});
 	});
@@ -62,13 +79,12 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(201)
 				.expect((res) => {
-					expect(res.body).to.be.an('array');
-					expect(res.body[0]).to.be.an('object');
+					expect(res.body).to.be.an('object');
 
 					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body[0], ['rideID', 'created']),
+						lodash.omit(res.body, ['rideID', 'created']),
 						(value, key) => lodash.camelCase(key)
 					);
 
@@ -90,7 +106,7 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -114,7 +130,7 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -138,7 +154,7 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -162,12 +178,12 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
 						error_code: 'VALIDATION_ERROR',
-						message: 'Rider name must be a non empty string'
+						message: 'Driver name must be a non empty string'
 					});
 				})
 				.end(done);
@@ -186,12 +202,62 @@ describe('API tests', () => {
 					driver_vehicle: false
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
 						error_code: 'VALIDATION_ERROR',
-						message: 'Rider name must be a non empty string'
+						message: 'Driver vehicle must be a non empty string'
+					});
+				})
+				.end(done);
+		});
+	});
+
+	describe('GET /rides/:id', () => {
+		it('should return ride with ID 1', (done) => {
+			request(app)
+				.get('/rides/1')
+				.expect('Content-Type', /json/)
+				.expect(200)
+				.expect((res) => {
+					expect(res.body).to.be.an('object');
+
+					const formattedResponse = lodash.mapKeys(
+						lodash.omit(res.body, ['rideID', 'created']),
+						(value, key) => lodash.camelCase(key)
+					);
+
+					expect(formattedResponse).to.deep.equal(MOCK_RIDE);
+				})
+				.end(done);
+		});
+
+		it('should return error response if ride with ID is not found', (done) => {
+			request(app)
+				.get('/rides/999999')
+				.expect('Content-Type', /json/)
+				.expect(404)
+				.expect((res) => {
+					expect(res.body).to.be.an('object');
+					expect(res.body).to.deep.equal({
+						error_code: 'RIDES_NOT_FOUND_ERROR',
+						message: 'Could not find any rides'
+					});
+				})
+				.end(done);
+		});
+
+		it('should return error response if ride below 1 is given', (done) => {
+			request(app)
+				.get('/rides/-23')
+				.expect('Content-Type', /json/)
+				.expect(400)
+				.expect((res) => {
+					expect(res.body).to.be.an('object');
+					expect(res.body).to.deep.equal({
+						error_code: 'VALIDATION_ERROR',
+						message: 'ID must be an integer greater than 0'
 					});
 				})
 				.end(done);
@@ -266,38 +332,53 @@ describe('API tests', () => {
 				})
 				.end(done);
 		});
-	});
 
-	describe('GET /rides/:id', () => {
-		it('should return ride with ID 1', (done) => {
+		it('should return error if no rides are found in DB', (done) => {
+			db.runAsync('DELETE FROM Rides')
+				.then(() => {
+					request(app)
+						.get('/rides')
+						.expect('Content-Type', /json/)
+						.expect(404)
+						.expect((res) => {
+							expect(res.body).to.be.an('object');
+							expect(res.body).to.deep.equal({
+								error_code: 'RIDES_NOT_FOUND_ERROR',
+								message: 'Could not find any rides'
+							});
+						})
+						.end(done);
+				})
+				.catch(done);
+		});
+
+		it('should return error if limit above 50 is given', (done) => {
 			request(app)
-				.get('/rides/1')
+				.get('/rides')
+				.query({ limit: 100 })
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
-					expect(res.body).to.be.an('array');
-					expect(res.body[0]).to.be.an('object');
-
-					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body[0], ['rideID', 'created']),
-						(value, key) => lodash.camelCase(key)
-					);
-
-					expect(formattedResponse).to.deep.equal(MOCK_RIDE);
+					expect(res.body).to.be.an('object');
+					expect(res.body).to.deep.equal({
+						error_code: 'VALIDATION_ERROR',
+						message: 'Limit must be an integer between 1 and 50'
+					});
 				})
 				.end(done);
 		});
 
-		it('should return error response if ride with ID is not found', (done) => {
+		it('should return error if page below 1 is given', (done) => {
 			request(app)
-				.get('/rides/999999')
+				.get('/rides')
+				.query({ page: -23 })
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
-						error_code: 'RIDES_NOT_FOUND_ERROR',
-						message: 'Could not find any rides'
+						error_code: 'VALIDATION_ERROR',
+						message: 'Page must be an integer greater than 0'
 					});
 				})
 				.end(done);
