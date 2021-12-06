@@ -50,7 +50,7 @@ const postRides = async (req, res) => {
 			ride.rideID
 		);
 
-		return res.status(201).send([ride]);
+		return res.status(201).send(ride);
 	} catch (err) {
 		logger.error(
 			req.nanoid,
@@ -147,7 +147,7 @@ const getRidesId = async (req, res) => {
 			id
 		);
 
-		return res.send([ride]);
+		return res.send(ride);
 	} catch (err) {
 		logger.error(
 			req.nanoid,

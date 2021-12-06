@@ -81,11 +81,10 @@ describe('API tests', () => {
 				.expect('Content-Type', /json/)
 				.expect(201)
 				.expect((res) => {
-					expect(res.body).to.be.an('array');
-					expect(res.body[0]).to.be.an('object');
+					expect(res.body).to.be.an('object');
 
 					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body[0], ['rideID', 'created']),
+						lodash.omit(res.body, ['rideID', 'created']),
 						(value, key) => lodash.camelCase(key)
 					);
 
@@ -222,11 +221,10 @@ describe('API tests', () => {
 				.expect('Content-Type', /json/)
 				.expect(200)
 				.expect((res) => {
-					expect(res.body).to.be.an('array');
-					expect(res.body[0]).to.be.an('object');
+					expect(res.body).to.be.an('object');
 
 					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body[0], ['rideID', 'created']),
+						lodash.omit(res.body, ['rideID', 'created']),
 						(value, key) => lodash.camelCase(key)
 					);
 
