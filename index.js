@@ -9,6 +9,7 @@ const swaggerDocument = YAML.load('./src/swagger.yaml');
 const express = require('express');
 const { nanoid } = require('nanoid');
 const server = require('./src/app');
+const morgan = require('morgan');
 
 (async () => {
 	try {
@@ -17,6 +18,12 @@ const server = require('./src/app');
 		await init();
 
 		const app = express();
+
+		app.use(morgan('tiny', {
+			stream: {
+				write: (message) => logger.info(message)
+			}
+		}));
 
 		app.use((req, res, next) => {
 			req.nanoid = nanoid();
