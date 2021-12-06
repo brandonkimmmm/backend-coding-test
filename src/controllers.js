@@ -1,110 +1,62 @@
 'use strict';
 
 const logger = require('../tools/logger');
-const { db } = require('../tools/database');
-const { isInteger } = require('lodash');
+const { createRide, countRides, getPaginatedRides, getRide } = require('./helpers');
 
-const postRides = (req, res) => {
-	const startLatitude = Number(req.body.start_lat);
-	const startLongitude = Number(req.body.start_long);
-	const endLatitude = Number(req.body.end_lat);
-	const endLongitude = Number(req.body.end_long);
-	const riderName = req.body.rider_name;
-	const driverName = req.body.driver_name;
-	const driverVehicle = req.body.driver_vehicle;
-
-	if (startLatitude < -90 || startLatitude > 90 || startLongitude < -180 || startLongitude > 180) {
-		return res.send({
-			error_code: 'VALIDATION_ERROR',
-			message: 'Start latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively'
-		});
-	}
-
-	if (endLatitude < -90 || endLatitude > 90 || endLongitude < -180 || endLongitude > 180) {
-		return res.send({
-			error_code: 'VALIDATION_ERROR',
-			message: 'End latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively'
-		});
-	}
-
-	if (typeof riderName !== 'string' || riderName.length < 1) {
-		return res.send({
-			error_code: 'VALIDATION_ERROR',
-			message: 'Rider name must be a non empty string'
-		});
-	}
-
-	if (typeof driverName !== 'string' || driverName.length < 1) {
-		return res.send({
-			error_code: 'VALIDATION_ERROR',
-			message: 'Rider name must be a non empty string'
-		});
-	}
-
-	if (typeof driverVehicle !== 'string' || driverVehicle.length < 1) {
-		return res.send({
-			error_code: 'VALIDATION_ERROR',
-			message: 'Rider name must be a non empty string'
-		});
-	}
-
-	var values = [req.body.start_lat, req.body.start_long, req.body.end_lat, req.body.end_long, req.body.rider_name, req.body.driver_name, req.body.driver_vehicle];
-
-	db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', values, function (err) {
-		if (err) {
-			return res.send({
-				error_code: 'SERVER_ERROR',
-				message: 'Unknown error'
-			});
-		}
-
-		db.all('SELECT * FROM Rides WHERE rideID = ?', this.lastID, function (err, rows) {
-			if (err) {
-				return res.send({
-					error_code: 'SERVER_ERROR',
-					message: 'Unknown error'
-				});
-			}
-
-			res.send(rows);
-		});
-	});
-};
-
-const getRides = async (req, res) => {
-	let limit = req.query.limit ? parseInt(req.query.limit) : 50;
-	let page = req.query.page ? parseInt(req.query.page) : 1;
-
-	logger.info(`GET /rides limit: ${limit} page: ${page}`);
-
-	if (!isInteger(limit) || limit <= 0 || limit > 50) {
-		limit = 50;
-	}
-
-	if (!isInteger(page) || page <= 0) {
-		page = 1;
-	}
-
-	const offset = limit * (page - 1);
+const postRides = async (req, res) => {
+	const {
+		start_lat,
+		start_long,
+		end_lat,
+		end_long,
+		rider_name,
+		driver_name,
+		driver_vehicle
+	} = req.body;
 
 	try {
-		const { count } = await db.getAsync('SELECT COUNT(RideID) AS count FROM Rides');
+		logger.verbose(
+			req.nanoid,
+			'src/controllers/postRides creating ride',
+			'startLat:',
+			start_lat,
+			'startLong:',
+			start_long,
+			'endLat:',
+			end_lat,
+			'endLong:',
+			end_long,
+			'riderName:',
+			rider_name,
+			'driverName:',
+			driver_name,
+			'driverVehicle:',
+			driver_vehicle
+		);
 
-		if (count === 0) {
-			return res.send({
-				error_code: 'RIDES_NOT_FOUND_ERROR',
-				message: 'Could not find any rides'
-			});
-		}
+		const ride = await createRide(
+			start_lat,
+			start_long,
+			end_lat,
+			end_long,
+			rider_name,
+			driver_name,
+			driver_vehicle
+		);
 
-		const rows = await db.allAsync('SELECT * FROM Rides ORDER BY rideID DESC LIMIT ? OFFSET ?', [limit, offset]);
+		logger.verbose(
+			req.nanoid,
+			'src/controllers/postRides ride created with ID:',
+			ride.rideID
+		);
 
-		return res.send({
-			count,
-			rows
-		});
+		return res.send([ride]);
 	} catch (err) {
-		logger.error(`GET /rides error: ${err.message}`);
+		logger.error(
+			req.nanoid,
+			'src/controllers/postRides err during ride creation',
+			err.message
+		);
 
 		return res.send({
 			error_code: 'SERVER_ERROR',
@@ -113,24 +65,101 @@ const getRides = async (req, res) => {
 	}
 };
 
-const getRidesId = (req, res) => {
-	db.all(`SELECT * FROM Rides WHERE rideID='${req.params.id}'`, function (err, rows) {
-		if (err) {
-			return res.send({
-				error_code: 'SERVER_ERROR',
-				message: 'Unknown error'
-			});
-		}
+const getRides = async (req, res) => {
+	const { limit, page } = req.query;
 
-		if (rows.length === 0) {
+	try {
+		logger.verbose(
+			req.nanoid,
+			'src/controllers/getRides getting rides',
+			'limit:',
+			limit,
+			'page:',
+			page
+		);
+
+		const count = await countRides();
+
+		if (count === 0) {
+			logger.error(
+				req.nanoid,
+				'src/controllers/getRides no rides found in database'
+			);
+
 			return res.send({
 				error_code: 'RIDES_NOT_FOUND_ERROR',
 				message: 'Could not find any rides'
 			});
 		}
 
-		res.send(rows);
-	});
+		const rows = await getPaginatedRides(limit, page);
+
+		logger.verbose(
+			req.nanoid,
+			'src/controllers/getRides rides retrieved',
+			'total count:',
+			count
+		);
+
+		return res.send({ count, rows });
+	} catch (err) {
+		logger.error(
+			req.nanoid,
+			'src/controllers/getRides err during ride query',
+			err.message
+		);
+
+		return res.send({
+			error_code: 'SERVER_ERROR',
+			message: 'Unknown error'
+		});
+	}
+};
+
+const getRidesId = async (req, res) => {
+	const { id } = req.params;
+
+	try {
+		logger.verbose(
+			req.nanoid,
+			'src/controllers/getRidesId getting ride with id',
+			id
+		);
+
+		const ride = await getRide(id);
+
+		if (!ride) {
+			logger.error(
+				req.nanoid,
+				'src/controllers/getRidesId ride not found with ID',
+				id
+			);
+
+			return res.send({
+				error_code: 'RIDES_NOT_FOUND_ERROR',
+				message: 'Could not find any rides'
+			});
+		}
+
+		logger.verbose(
+			req.nanoid,
+			'src/controllers/getRidesId ride found with ID',
+			id
+		);
+
+		return res.send([ride]);
+	} catch (err) {
+		logger.error(
+			req.nanoid,
+			'src/controllers/getRidesId error during ride DB query',
+			err.message
+		);
+
+		return res.send({
+			error_code: 'SERVER_ERROR',
+			message: 'Unknown error'
+		});
+	}
 };
 
 module.exports = {
