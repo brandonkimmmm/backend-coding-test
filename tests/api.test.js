@@ -79,7 +79,7 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(201)
 				.expect((res) => {
 					expect(res.body).to.be.an('array');
 					expect(res.body[0]).to.be.an('object');
@@ -107,7 +107,7 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -131,7 +131,7 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -155,7 +155,7 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -179,7 +179,7 @@ describe('API tests', () => {
 					driver_vehicle: MOCK_RIDE.driverVehicle
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -203,7 +203,7 @@ describe('API tests', () => {
 					driver_vehicle: false
 				})
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -239,7 +239,7 @@ describe('API tests', () => {
 			request(app)
 				.get('/rides/999999')
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(404)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -254,7 +254,7 @@ describe('API tests', () => {
 			request(app)
 				.get('/rides/-23')
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -341,7 +341,7 @@ describe('API tests', () => {
 					request(app)
 						.get('/rides')
 						.expect('Content-Type', /json/)
-						.expect(200)
+						.expect(404)
 						.expect((res) => {
 							expect(res.body).to.be.an('object');
 							expect(res.body).to.deep.equal({
@@ -359,7 +359,7 @@ describe('API tests', () => {
 				.get('/rides')
 				.query({ limit: 100 })
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({
@@ -375,7 +375,7 @@ describe('API tests', () => {
 				.get('/rides')
 				.query({ page: -23 })
 				.expect('Content-Type', /json/)
-				.expect(200)
+				.expect(400)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
 					expect(res.body).to.deep.equal({

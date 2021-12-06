@@ -50,7 +50,7 @@ const postRides = async (req, res) => {
 			ride.rideID
 		);
 
-		return res.send([ride]);
+		return res.status(201).send([ride]);
 	} catch (err) {
 		logger.error(
 			req.nanoid,
@@ -58,7 +58,7 @@ const postRides = async (req, res) => {
 			err.message
 		);
 
-		return res.send({
+		return res.status(500).send({
 			error_code: 'SERVER_ERROR',
 			message: 'Unknown error'
 		});
@@ -86,7 +86,7 @@ const getRides = async (req, res) => {
 				'src/controllers/getRides no rides found in database'
 			);
 
-			return res.send({
+			return res.status(404).send({
 				error_code: 'RIDES_NOT_FOUND_ERROR',
 				message: 'Could not find any rides'
 			});
@@ -109,7 +109,7 @@ const getRides = async (req, res) => {
 			err.message
 		);
 
-		return res.send({
+		return res.status(500).send({
 			error_code: 'SERVER_ERROR',
 			message: 'Unknown error'
 		});
@@ -135,7 +135,7 @@ const getRidesId = async (req, res) => {
 				id
 			);
 
-			return res.send({
+			return res.status(404).send({
 				error_code: 'RIDES_NOT_FOUND_ERROR',
 				message: 'Could not find any rides'
 			});
@@ -155,7 +155,7 @@ const getRidesId = async (req, res) => {
 			err.message
 		);
 
-		return res.send({
+		return res.status(500).send({
 			error_code: 'SERVER_ERROR',
 			message: 'Unknown error'
 		});

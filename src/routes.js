@@ -36,7 +36,7 @@ router.post(
 				err.message
 			);
 
-			return res.send({
+			return res.status(400).send({
 				error_code: 'VALIDATION_ERROR',
 				message: err.message
 			});
@@ -69,7 +69,7 @@ router.get(
 				err.message
 			);
 
-			return res.send({
+			return res.status(400).send({
 				error_code: 'VALIDATION_ERROR',
 				message: err.message
 			});
@@ -99,7 +99,7 @@ router.get(
 				err.message
 			);
 
-			return res.send({
+			return res.status(400).send({
 				error_code: 'VALIDATION_ERROR',
 				message: err.message
 			});
