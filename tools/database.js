@@ -6,13 +6,13 @@ const db = new sqlite3.Database(':memory:');
 const { promisifyAll } = require('bluebird');
 promisifyAll(db);
 
-const init = async () => {
+const initDb = () => {
 	logger.info(
 		'tools/db/init',
 		'Creating Rides DB table'
 	);
 
-	await db.run(`
+	db.run(`
 		CREATE TABLE Rides
 		(
 		rideID INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -34,6 +34,6 @@ const init = async () => {
 };
 
 module.exports = {
-	init,
+	initDb,
 	db
 };
