@@ -8,8 +8,8 @@ const YAML = require('yamljs');
 const swaggerDocument = YAML.load('./src/swagger.yaml');
 const express = require('express');
 const { nanoid } = require('nanoid');
-const server = require('./src/app');
 const morgan = require('morgan');
+const ridesRouter = require('./src/routes');
 
 (async () => {
 	try {
@@ -18,6 +18,9 @@ const morgan = require('morgan');
 		await init();
 
 		const app = express();
+
+		app.use(express.urlencoded({ extended: true }));
+		app.use(express.json());
 
 		app.use(morgan('tiny', {
 			stream: {
@@ -39,7 +42,9 @@ const morgan = require('morgan');
 			next();
 		});
 
-		server(app);
+		app.get('/health', (req, res) => res.send('Healthy'));
+
+		app.use('/rides', ridesRouter);
 
 		app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
