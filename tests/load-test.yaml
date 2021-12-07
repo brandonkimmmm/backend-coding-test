@@ -8,7 +8,7 @@ config:
     functional:
       phases:
         - duration: 5
-          arrivalRate: 5
+          arrivalRate: 20
       plugins:
         expect: {}
   processor: ./mockdata.js
