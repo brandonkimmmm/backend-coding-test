@@ -4,7 +4,7 @@ config:
     load:
       phases:
         - duration: 30
-          arrivalRate: 100
+          arrivalRate: 20
     functional:
       phases:
         - duration: 5
