@@ -7,10 +7,10 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "nyc mocha ./tests/*.test.js",
+    "test": "NODE_ENV=test nyc mocha ./tests/*.test.js",
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "test:load": "forever start index.js && artillery run --environment=functional ./tests/load-test.yaml && artillery run --environment=load ./tests/load-test.yaml && forever stopall"
+    "test:load": "NODE_ENV=test forever start index.js && artillery run --environment=functional ./tests/load-test.yaml && artillery run --environment=load ./tests/load-test.yaml && forever stopall"
   },
   "keywords": [
     "Xendit"
