@@ -54,7 +54,6 @@
     "eslint": "^8.4.0",
     "faker": "^5.5.3",
     "forever": "^4.0.1",
-    "joi-to-typescript": "^2.3.0",
     "mocha": "^6.1.4",
     "nodemon": "^2.0.15",
     "nyc": "^15.1.0",
