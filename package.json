@@ -7,6 +7,7 @@
     "test": "tests"
   },
   "scripts": {
+    "lint": "eslint .",
     "test": "NODE_ENV=test nyc mocha -r ts-node/register tests/*.test.ts",
     "build": "tsc --project tsconfig.build.json",
     "start": "node build/index.js",
@@ -51,7 +52,7 @@
     "artillery": "^1.6.1",
     "artillery-plugin-expect": "^1.5.0",
     "chai": "^4.3.4",
-    "eslint": "^8.4.0",
+    "eslint": "^7.32.0",
     "faker": "^5.5.3",
     "forever": "^4.0.1",
     "mocha": "^6.1.4",
