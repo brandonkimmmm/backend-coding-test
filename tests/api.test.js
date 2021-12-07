@@ -5,17 +5,10 @@ const lodash = require('lodash');
 const { expect } = require('chai');
 const { initDb, db } = require('../tools/database');
 const initApp = require('../src/app');
+const { getMockRide } = require('./mockdata');
 let app;
 
-const MOCK_RIDE = {
-	startLat: -70,
-	startLong: -100,
-	endLat: 89,
-	endLong: -1,
-	riderName: 'brandon',
-	driverName: 'john',
-	driverVehicle: '400z'
-};
+const MOCK_RIDE = getMockRide();
 
 describe('API tests', () => {
 	before((done) => {
@@ -28,7 +21,8 @@ describe('API tests', () => {
 			app = initApp();
 
 			for (let i = 0; i < 50; i++) {
-				db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', Object.values(MOCK_RIDE));
+				const fakerRide = getMockRide();
+				db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', Object.values(fakerRide));
 			}
 
 			done();
@@ -82,13 +76,10 @@ describe('API tests', () => {
 				.expect(201)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
+					expect(lodash.omit(res.body, ['rideID', 'created'])).to.deep.equal(MOCK_RIDE);
 
-					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body, ['rideID', 'created']),
-						(value, key) => lodash.camelCase(key)
-					);
-
-					expect(formattedResponse).to.deep.equal(MOCK_RIDE);
+					MOCK_RIDE.rideID = res.body.rideID;
+					MOCK_RIDE.created = res.body.created;
 				})
 				.end(done);
 		});
@@ -215,20 +206,14 @@ describe('API tests', () => {
 	});
 
 	describe('GET /rides/:id', () => {
-		it('should return ride with ID 1', (done) => {
+		it('should return ride with created ride ID', (done) => {
 			request(app)
-				.get('/rides/1')
+				.get(`/rides/${MOCK_RIDE.rideID}`)
 				.expect('Content-Type', /json/)
 				.expect(200)
 				.expect((res) => {
 					expect(res.body).to.be.an('object');
-
-					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body, ['rideID', 'created']),
-						(value, key) => lodash.camelCase(key)
-					);
-
-					expect(formattedResponse).to.deep.equal(MOCK_RIDE);
+					expect(res.body).to.deep.equal(MOCK_RIDE);
 				})
 				.end(done);
 		});
@@ -278,13 +263,7 @@ describe('API tests', () => {
 					expect(res.body.rows).to.be.an('array');
 					expect(res.body.rows.length).to.equal(50);
 					expect(res.body.rows[0]).to.be.an('object');
-
-					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body.rows[0], ['rideID', 'created']),
-						(value, key) => lodash.camelCase(key)
-					);
-
-					expect(formattedResponse).to.deep.equal(MOCK_RIDE);
+					expect(res.body.rows[0]).to.deep.equal(MOCK_RIDE);
 				})
 				.end(done);
 		});
@@ -303,13 +282,7 @@ describe('API tests', () => {
 					expect(res.body.rows).to.be.an('array');
 					expect(res.body.rows.length).to.equal(20);
 					expect(res.body.rows[0]).to.be.an('object');
-
-					const formattedResponse = lodash.mapKeys(
-						lodash.omit(res.body.rows[0], ['rideID', 'created']),
-						(value, key) => lodash.camelCase(key)
-					);
-
-					expect(formattedResponse).to.deep.equal(MOCK_RIDE);
+					expect(res.body.rows[0]).to.deep.equal(MOCK_RIDE);
 				})
 				.end(done);
 		});

@@ -1,0 +1,182 @@
+config:
+  target: http://localhost:8010
+  environments:
+    load:
+      phases:
+        - duration: 30
+          arrivalRate: 20
+    functional:
+      phases:
+        - duration: 5
+          arrivalRate: 20
+      plugins:
+        expect: {}
+  processor: ./mockdata.js
+  phases:
+    - duration: 30
+      arrivalRate: 100
+  ensure:
+    p99: 50
+scenarios:
+  - name: Basic endpoint flow
+    flow:
+      - function: generateRandomRide
+      - get:
+          url: /health
+          expect:
+            - statusCode: 200
+      - post:
+          url: /rides
+          json: '{{ mockRide }}'
+          capture:
+            - json: $
+              as: createdRide
+          expect:
+            - statusCode: 201
+            - contentType: json
+            - hasProperty: rideID
+            - hasProperty: created
+            - hasProperty: startLat
+            - hasProperty: startLong
+            - hasProperty: endLat
+            - hasProperty: endLong
+            - hasProperty: riderName
+            - hasProperty: driverName
+            - hasProperty: driverVehicle
+            - equals:
+              - '{{ mockRide.start_lat }}'
+              - '{{ createdRide.startLat }}'
+            - equals:
+              - '{{ mockRide.start_long }}'
+              - '{{ createdRide.startLong }}'
+            - equals:
+              - '{{ mockRide.end_lat }}'
+              - '{{ createdRide.endLat }}'
+            - equals:
+              - '{{ mockRide.end_long }}'
+              - '{{ createdRide.endLong }}'
+            - equals:
+              - '{{ mockRide.rider_name }}'
+              - '{{ createdRide.riderName }}'
+            - equals:
+              - '{{ mockRide.driver_name }}'
+              - '{{ createdRide.driverName }}'
+            - equals:
+              - '{{ mockRide.driver_vehicle }}'
+              - '{{ createdRide.driverVehicle }}'
+      - get:
+          url: '/rides/{{ createdRide.rideID }}'
+          capture:
+            - json: $
+              as: queriedRide
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: rideID
+            - hasProperty: created
+            - hasProperty: startLat
+            - hasProperty: startLong
+            - hasProperty: endLat
+            - hasProperty: endLong
+            - hasProperty: riderName
+            - hasProperty: driverName
+            - hasProperty: driverVehicle
+            - equals:
+              - '{{ createdRide.rideID }}'
+              - '{{ queriedRide.rideID }}'
+            - equals:
+              - '{{ createdRide.created }}'
+              - '{{ queriedRide.created }}'
+            - equals:
+              - '{{ createdRide.startLat }}'
+              - '{{ queriedRide.startLat }}'
+            - equals:
+              - '{{ createdRide.startLong }}'
+              - '{{ queriedRide.startLong }}'
+            - equals:
+              - '{{ createdRide.endLat }}'
+              - '{{ queriedRide.endLat }}'
+            - equals:
+              - '{{ createdRide.endLong }}'
+              - '{{ queriedRide.endLong }}'
+            - equals:
+              - '{{ createdRide.riderName }}'
+              - '{{ queriedRide.riderName }}'
+            - equals:
+              - '{{ createdRide.driverName }}'
+              - '{{ queriedRide.driverName }}'
+            - equals:
+              - '{{ createdRide.driverVehicle }}'
+              - '{{ queriedRide.driverVehicle }}'
+      - get:
+          url: /rides
+          expect:
+            - statusCode: 200
+            - contentType: json
+            - hasProperty: count
+            - hasProperty: rows
+            - hasProperty: 'rows[0].rideID'
+            - hasProperty: 'rows[0].created'
+            - hasProperty: 'rows[0].startLat'
+            - hasProperty: 'rows[0].startLong'
+            - hasProperty: 'rows[0].endLat'
+            - hasProperty: 'rows[0].endLong'
+            - hasProperty: 'rows[0].riderName'
+            - hasProperty: 'rows[0].driverName'
+            - hasProperty: 'rows[0].driverVehicle'
+      - post:
+          url: /rides
+          json:
+            start_lat: '{{ mockRide.start_lat }}'
+            start_long: '{{ mockRide.start_long }}'
+            end_lat: '{{ mockRide.end_lat }}'
+            end_long: '{{ mockRide.end_long }}'
+            rider_name: null
+            driver_name: '{{ mockRide.rider_vehicle }}'
+            driver_vehicle: '{{ mockRide.driver_vehicle }}'
+          capture:
+            - json: $
+              as: postRidesError
+          expect:
+            - statusCode: 400
+            - contentType: json
+            - hasProperty: error_code
+            - hasProperty: message
+            - equals:
+              - VALIDATION_ERROR
+              - '{{ postRidesError.error_code }}'
+            - equals:
+              - Rider name must be a non empty string
+              - '{{ postRidesError.message }}'
+      - get:
+          url: '/rides/null'
+          capture:
+            - json: $
+              as: getRidesIDValidationError
+          expect:
+            - statusCode: 400
+            - contentType: json
+            - hasProperty: error_code
+            - hasProperty: message
+            - equals:
+              - VALIDATION_ERROR
+              - '{{ getRidesIDValidationError.error_code }}'
+            - equals:
+              - ID must be an integer greater than 0
+              - '{{ getRidesIDValidationError.message }}'
+      - get:
+          url: '/rides/99999999999'
+          capture:
+            - json: $
+              as: getRidesIDNotFoundError
+          expect:
+            - statusCode: 404
+            - contentType: json
+            - hasProperty: error_code
+            - hasProperty: message
+            - equals:
+              - RIDES_NOT_FOUND_ERROR
+              - '{{ getRidesIDNotFoundError.error_code }}'
+            - equals:
+              - Could not find any rides
+              - '{{ getRidesIDNotFoundError.message }}'
