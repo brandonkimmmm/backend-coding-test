@@ -1,27 +1,34 @@
 'use strict';
 
 const faker = require('faker');
+const lodash = require('lodash');
 
-const mockRide = () => {
-	return {
-		start_lat: faker.datatype.number({ min: -90, max: 90 }),
-		start_long: faker.datatype.number({ min: -180, max: 180 }),
-		end_lat: faker.datatype.number({ min: -90, max: 90 }),
-		end_long: faker.datatype.number({ min: -180, max: 180 }),
-		rider_name: faker.name.findName(),
-		driver_name: faker.name.findName(),
-		driver_vehicle: faker.vehicle.vehicle()
+const getMockRide = (opts = { snake_case: false }) => {
+	const ride = {
+		startLat: faker.datatype.number({ min: -90, max: 90 }),
+		startLong: faker.datatype.number({ min: -180, max: 180 }),
+		endLat: faker.datatype.number({ min: -90, max: 90 }),
+		endLong: faker.datatype.number({ min: -180, max: 180 }),
+		riderName: faker.name.findName(),
+		driverName: faker.name.findName(),
+		driverVehicle: faker.vehicle.vehicle()
 	};
+
+	if (opts.snake_case) {
+		return lodash.mapKeys(ride, (value, key) => lodash.snakeCase(key));
+	}
+
+	return ride;
 };
 
 const generateRandomRide = (userContext, events, done) => {
-	const ride = mockRide();
+	const ride = getMockRide({ snake_case: true });
 
 	userContext.vars.mockRide = ride;
 	return done();
 };
 
 module.exports = {
-	mockRide,
+	getMockRide,
 	generateRandomRide
 };

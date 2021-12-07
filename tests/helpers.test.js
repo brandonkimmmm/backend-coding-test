@@ -4,16 +4,9 @@ const lodash = require('lodash');
 const { expect } = require('chai');
 const { initDb, db } = require('../tools/database');
 const { createRide, getPaginatedRides, getRide, countRides } = require('../src/helpers');
+const { getMockRide } = require('./mockdata');
 
-const MOCK_RIDE = {
-	startLat: -70,
-	startLong: -100,
-	endLat: 89,
-	endLong: -1,
-	riderName: 'brandon',
-	driverName: 'john',
-	driverVehicle: '400z'
-};
+const MOCK_RIDE = getMockRide();
 
 describe('Helper tests', () => {
 	before((done) => {
@@ -25,7 +18,8 @@ describe('Helper tests', () => {
 			initDb();
 
 			for (let i = 0; i < 50; i++) {
-				db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', Object.values(MOCK_RIDE));
+				const fakerRide = getMockRide();
+				db.run('INSERT INTO Rides(startLat, startLong, endLat, endLong, riderName, driverName, driverVehicle) VALUES (?, ?, ?, ?, ?, ?, ?)', Object.values(fakerRide));
 			}
 
 			done();
