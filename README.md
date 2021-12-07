@@ -21,7 +21,7 @@ This application creates an express server that allows users to create and get r
 
 ## Dev Mode
 
-This application can be ran in dev mode using `nodemon` using the script `npm run dev`.
+This application can be ran in dev mode using `nodemon` using the script `npm run dev`. You can also check your code using `npm run lint`.
 
 ## API Documentation
 
