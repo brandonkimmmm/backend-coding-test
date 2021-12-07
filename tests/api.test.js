@@ -384,4 +384,28 @@ describe('API tests', () => {
 				.end(done);
 		});
 	});
+
+	describe('Helmet Middleware test', () => {
+		it('should set all relevant helmet headers', (done) => {
+			request(app)
+				.get('/health')
+				.expect(200)
+				.expect((res) => {
+					expect(res.headers['x-powered-by']).to.be.undefined;
+					expect(Object.keys(res.headers)).to.include(
+						'content-security-policy',
+						'x-dns-prefech-control',
+						'expect-ct',
+						'x-frame-options',
+						'strict-transport-security',
+						'x-download-options',
+						'x-content-type-options',
+						'x-permitted-cross-domain-policies',
+						'referrer-policy',
+						'x-xss-protection'
+					);
+				})
+				.end(done);
+		});
+	});
 });
