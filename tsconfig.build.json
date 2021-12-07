@@ -1,0 +1,12 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "build",
+		"declaration": true
+	},
+	"exclude": [
+		"tests/*.ts",
+		"tests/helpers/mockdata.ts"
+	]
+}

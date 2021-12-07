@@ -1,12 +1,14 @@
-'use strict';
+import logger from './logger';
+import sqlite3 from 'sqlite3';
+import { promisifyAll } from 'bluebird';
 
-const logger = require('./logger');
-const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database(':memory:');
-const { promisifyAll } = require('bluebird');
-promisifyAll(db);
+export interface PromisifiedDB extends sqlite3.Database {
+	[x: string]: any;
+}
 
-const initDb = () => {
+export const db: PromisifiedDB = promisifyAll(new sqlite3.Database(':memory:'));
+
+export const initDb = () => {
 	logger.info(
 		'tools/db/init',
 		'Creating Rides DB table'
@@ -31,9 +33,4 @@ const initDb = () => {
 		'tools/db/init',
 		'Rides DB table created'
 	);
-};
-
-module.exports = {
-	initDb,
-	db
 };

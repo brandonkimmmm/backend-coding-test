@@ -1,11 +1,10 @@
-'use strict';
+import express from 'express';
+import { pick } from 'lodash';
+import { postRides, getRides, getRidesId } from './controllers';
+import { CreateRideSchema, GetRideSchema, GetRidesSchema } from '../tools/schemas';
+import logger from '../tools/logger';
 
-const express = require('express');
 const router = express.Router();
-const { postRides, getRides, getRidesId } = require('./controllers');
-const logger = require('../tools/logger');
-const { pick } = require('lodash');
-const { rideSchema, paginationSchema, rideIdSchema } = require('../tools/schemas');
 
 router.post(
 	'/',
@@ -27,18 +26,18 @@ router.post(
 		);
 
 		try {
-			await rideSchema.validateAsync(req.body);
+			await CreateRideSchema.validateAsync(req.body);
 			next();
 		} catch (err) {
 			logger.error(
 				req.nanoid,
 				'src/routes/postRides validation error:',
-				err.message
+				err instanceof Error ? err.message : ''
 			);
 
 			return res.status(400).send({
 				error_code: 'VALIDATION_ERROR',
-				message: err.message
+				message: err instanceof Error ? err.message : 'Invalid request data'
 			});
 		}
 	},
@@ -60,18 +59,18 @@ router.get(
 		);
 
 		try {
-			await paginationSchema.validateAsync(req.query);
+			await GetRidesSchema.validateAsync(req.query);
 			next();
 		} catch (err) {
 			logger.error(
 				req.nanoid,
 				'src/routes/getRides validation error:',
-				err.message
+				err instanceof Error ? err.message : ''
 			);
 
 			return res.status(400).send({
 				error_code: 'VALIDATION_ERROR',
-				message: err.message
+				message: err instanceof Error ? err.message : 'Invalid request data'
 			});
 		}
 	},
@@ -90,22 +89,22 @@ router.get(
 		);
 
 		try {
-			await rideIdSchema.validateAsync(req.params);
+			await GetRideSchema.validateAsync(req.params);
 			next();
 		} catch (err) {
 			logger.error(
 				req.nanoid,
 				'src/routes/getRidesID validation error:',
-				err.message
+				err instanceof Error ? err.message : ''
 			);
 
 			return res.status(400).send({
 				error_code: 'VALIDATION_ERROR',
-				message: err.message
+				message: err instanceof Error ? err.message : 'Invalid request data'
 			});
 		}
 	},
 	getRidesId
 );
 
-module.exports = router;
+export default router;

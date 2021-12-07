@@ -1,20 +1,14 @@
-'use strict';
-
-const lodash = require('lodash');
-const { expect } = require('chai');
-const { initDb, db } = require('../tools/database');
-const { createRide, getPaginatedRides, getRide, countRides } = require('../src/helpers');
-const { getMockRide } = require('./mockdata');
+import lodash from 'lodash';
+import { expect } from 'chai';
+import { initDb, db } from '../src/tools/database';
+import { createRide, getPaginatedRides, getRide, countRides } from '../src/api/helpers';
+import { getMockRide } from './helpers/mockdata';
 
 const MOCK_RIDE = getMockRide();
 
 describe('Helper tests', () => {
 	before((done) => {
-		db.serialize((err) => {
-			if (err) {
-				return done(err);
-			}
-
+		db.serialize(() => {
 			initDb();
 
 			for (let i = 0; i < 50; i++) {
@@ -27,11 +21,7 @@ describe('Helper tests', () => {
 	});
 
 	after((done) => {
-		db.serialize((err) => {
-			if (err) {
-				return done(err);
-			}
-
+		db.serialize(() => {
 			db.run('DROP TABLE Rides');
 
 			done();
@@ -69,50 +59,29 @@ describe('Helper tests', () => {
 			MOCK_RIDE.rideID = ride.rideID;
 		});
 
-		it('should create a new ride and only return rideID', async () => {
-			const id = await createRide(
-				MOCK_RIDE.startLat,
-				MOCK_RIDE.startLong,
-				MOCK_RIDE.endLat,
-				MOCK_RIDE.endLong,
-				MOCK_RIDE.riderName,
-				MOCK_RIDE.driverName,
-				MOCK_RIDE.driverVehicle,
-				{
-					returning: false
-				}
-			);
-
-			expect(id).to.equal(MOCK_RIDE.rideID + 1);
-
-			MOCK_RIDE.rideID = id;
-		});
-
-		it('should throw an error if invalid start long is given', async () => {
-			let error;
+		it('should be rejected if invalid start lat is given', async () => {
+			let message;
 
 			try {
 				await createRide(
-					MOCK_RIDE.startLat,
-					false,
+					// @ts-expect-error Testing validation
+					'hello123',
+					MOCK_RIDE.startLong,
 					MOCK_RIDE.endLat,
 					MOCK_RIDE.endLong,
 					MOCK_RIDE.riderName,
 					MOCK_RIDE.driverName,
-					MOCK_RIDE.driverVehicle,
-					{
-						returning: false
-					}
+					MOCK_RIDE.driverVehicle
 				);
 			} catch (err) {
-				error = err;
+				message = err instanceof Error ? err.message : null;
 			}
 
-			expect(error.message).to.equal('Error: Start latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively');
+			expect(message).to.equal('Start latitude and longitude must be between -90 - 90 and -180 to 180 degrees respectively');
 		});
 
-		it('should throw an error if invalid rider name is given', async () => {
-			let error;
+		it('should be rejected if invalid rider name is given', async () => {
+			let message;
 
 			try {
 				await createRide(
@@ -120,24 +89,22 @@ describe('Helper tests', () => {
 					MOCK_RIDE.startLong,
 					MOCK_RIDE.endLat,
 					MOCK_RIDE.endLong,
-					2390123,
+					// @ts-expect-error Testing validation
+					123,
 					MOCK_RIDE.driverName,
-					MOCK_RIDE.driverVehicle,
-					{
-						returning: false
-					}
+					MOCK_RIDE.driverVehicle
 				);
 			} catch (err) {
-				error = err;
+				message = err instanceof Error ? err.message : null;
 			}
 
-			expect(error.message).to.equal('Error: Rider name must be a non empty string');
+			expect(message).to.equal('Rider name must be a non empty string');
 		});
 	});
 
 	describe('#getRide', () => {
 		it('should get ride with ID 1', async () => {
-			const ride = await getRide(MOCK_RIDE.rideID);
+			const ride = await getRide(MOCK_RIDE.rideID as number);
 			expect(lodash.omit(ride, ['created'])).to.deep.equal(MOCK_RIDE);
 		});
 
@@ -147,31 +114,33 @@ describe('Helper tests', () => {
 		});
 
 		it('should throw an error if invalid ride ID is given', async () => {
-			let error;
+			let message;
 
 			try {
+				// @ts-expect-error Testing validation
 				await getRide(false);
 			} catch (err) {
-				error = err;
+				message = err instanceof Error ? err.message : null;
 			}
 
-			expect(error.message).to.equal('ID must be an integer greater than 0');
+			expect(message).to.equal('ID must be an integer greater than 0');
 		});
 
 		it('should not allow SQL injection', async () => {
-			let error;
+			let message;
 
 			try {
+				// @ts-expect-error Testing validation
 				await getRide('1 OR 1=1');
 			} catch (err) {
-				error = err;
+				message = err instanceof Error ? err.message : null;
 			}
 
-			expect(error.message).to.equal('ID must be an integer greater than 0');
+			expect(message).to.equal('ID must be an integer greater than 0');
 		});
 	});
 
-	describe('#coutnRides', () => {
+	describe('#countRides', () => {
 		it('should return number of rides in DB', async () => {
 			const count = await countRides();
 			expect(count).to.equal(MOCK_RIDE.rideID);
@@ -197,43 +166,44 @@ describe('Helper tests', () => {
 			const rides = await getPaginatedRides(1, 2);
 			expect(rides).to.be.an('array');
 			expect(rides.length).to.equal(1);
-			expect(rides[0].rideID).to.equal(MOCK_RIDE.rideID - 1);
+			expect(rides[0].rideID).to.equal(MOCK_RIDE.rideID as number - 1);
 		});
 
 		it('should throw an error if invalid limit is given', async () => {
-			let error;
+			let message;
 
 			try {
 				await getPaginatedRides(100);
 			} catch (err) {
-				error = err;
+				message = err instanceof Error ? err.message : null;
 			}
 
-			expect(error.message).to.equal('Limit must be an integer between 1 and 50');
+			expect(message).to.equal('Limit must be an integer between 1 and 50');
 		});
 
 		it('should throw an error if invalid page is given', async () => {
-			let error;
+			let message;
 
 			try {
 				await getPaginatedRides(50, -111);
 			} catch (err) {
-				error = err;
+				message = err instanceof Error ? err.message : null;
 			}
 
-			expect(error.message).to.equal('Page must be an integer greater than 0');
+			expect(message).to.equal('Page must be an integer greater than 0');
 		});
 
 		it('should not allow SQL injection', async () => {
-			let error;
+			let message;
 
 			try {
+				// @ts-expect-error Testing validation
 				await getPaginatedRides('1; DROP TABLE Rides');
 			} catch (err) {
-				error = err;
+				message = err instanceof Error ? err.message : null;
 			}
 
-			expect(error.message).to.equal('Limit must be an integer between 1 and 50');
+			expect(message).to.equal('Limit must be an integer between 1 and 50');
 		});
 	});
 });

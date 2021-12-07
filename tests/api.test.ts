@@ -1,24 +1,17 @@
-'use strict';
-
-const request = require('supertest');
-const lodash = require('lodash');
-const { expect } = require('chai');
-const { initDb, db } = require('../tools/database');
-const initApp = require('../src/app');
-const { getMockRide } = require('./mockdata');
-let app;
+import request from 'supertest';
+import lodash from 'lodash';
+import { expect } from 'chai';
+import { initDb, db } from '../src/tools/database';
+import { initApp } from '../src/api';
+import { getMockRide } from './helpers/mockdata';
+const app = initApp();
 
 const MOCK_RIDE = getMockRide();
 
 describe('API tests', () => {
 	before((done) => {
-		db.serialize((err) => {
-			if (err) {
-				return done(err);
-			}
-
+		db.serialize(() => {
 			initDb();
-			app = initApp();
 
 			for (let i = 0; i < 50; i++) {
 				const fakerRide = getMockRide();
@@ -30,11 +23,7 @@ describe('API tests', () => {
 	});
 
 	after((done) => {
-		db.serialize((err) => {
-			if (err) {
-				return done(err);
-			}
-
+		db.serialize(() => {
 			db.run('DROP TABLE Rides');
 
 			done();
@@ -365,18 +354,16 @@ describe('API tests', () => {
 				.expect(200)
 				.expect((res) => {
 					expect(res.headers['x-powered-by']).to.be.undefined;
-					expect(Object.keys(res.headers)).to.include(
-						'content-security-policy',
-						'x-dns-prefech-control',
-						'expect-ct',
-						'x-frame-options',
-						'strict-transport-security',
-						'x-download-options',
-						'x-content-type-options',
-						'x-permitted-cross-domain-policies',
-						'referrer-policy',
-						'x-xss-protection'
-					);
+					expect(res.headers).to.have.property('content-security-policy');
+					expect(res.headers).to.have.property('x-dns-prefetch-control');
+					expect(res.headers).to.have.property('expect-ct');
+					expect(res.headers).to.have.property('x-frame-options');
+					expect(res.headers).to.have.property('strict-transport-security');
+					expect(res.headers).to.have.property('x-download-options');
+					expect(res.headers).to.have.property('x-content-type-options');
+					expect(res.headers).to.have.property('x-permitted-cross-domain-policies');
+					expect(res.headers).to.have.property('referrer-policy');
+					expect(res.headers).to.have.property('x-xss-protection');
 				})
 				.end(done);
 		});

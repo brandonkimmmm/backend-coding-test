@@ -1,9 +1,9 @@
-'use strict';
+import { Request, Response } from 'express';
+import logger from '../tools/logger';
+import { createRide, countRides, getPaginatedRides, getRide, Ride } from './helpers';
+import { isString } from 'lodash';
 
-const logger = require('../tools/logger');
-const { createRide, countRides, getPaginatedRides, getRide } = require('./helpers');
-
-const postRides = async (req, res) => {
+export const postRides = async (req: Request, res: Response): Promise<Response> => {
 	const {
 		start_lat,
 		start_long,
@@ -34,7 +34,7 @@ const postRides = async (req, res) => {
 			driver_vehicle
 		);
 
-		const ride = await createRide(
+		const ride: Ride = await createRide(
 			start_lat,
 			start_long,
 			end_lat,
@@ -55,7 +55,7 @@ const postRides = async (req, res) => {
 		logger.error(
 			req.nanoid,
 			'src/controllers/postRides err during ride creation',
-			err.message
+			err instanceof Error ? err.message : ''
 		);
 
 		return res.status(500).send({
@@ -65,8 +65,9 @@ const postRides = async (req, res) => {
 	}
 };
 
-const getRides = async (req, res) => {
-	const { limit, page } = req.query;
+export const getRides = async (req: Request, res: Response): Promise<Response> => {
+	const limit = isString(req.query.limit) ? parseInt(req.query.limit) : 50;
+	const page = isString(req.query.page) ? parseInt(req.query.page) : 1;
 
 	try {
 		logger.verbose(
@@ -106,7 +107,7 @@ const getRides = async (req, res) => {
 		logger.error(
 			req.nanoid,
 			'src/controllers/getRides err during ride query',
-			err.message
+			err instanceof Error ? err.message : ''
 		);
 
 		return res.status(500).send({
@@ -116,8 +117,8 @@ const getRides = async (req, res) => {
 	}
 };
 
-const getRidesId = async (req, res) => {
-	const { id } = req.params;
+export const getRidesId = async (req: Request, res: Response): Promise<Response> => {
+	const id = isString(req.params.id) ? parseInt(req.params.id) : 0;
 
 	try {
 		logger.verbose(
@@ -152,7 +153,7 @@ const getRidesId = async (req, res) => {
 		logger.error(
 			req.nanoid,
 			'src/controllers/getRidesId error during ride DB query',
-			err.message
+			err instanceof Error ? err.message : ''
 		);
 
 		return res.status(500).send({
@@ -160,10 +161,4 @@ const getRidesId = async (req, res) => {
 			message: 'Unknown error'
 		});
 	}
-};
-
-module.exports = {
-	postRides,
-	getRides,
-	getRidesId
 };
