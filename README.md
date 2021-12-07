@@ -9,9 +9,10 @@ This application creates an express server that allows users to create and get r
 ## Setup
 
 1. Clone this repo
-2. Run `npm ci`
-3. Run `npm start`
-4. Hit the server to test health `curl localhost:8010/health` and expect a `200` response
+2. Run `npm ci` to install required packages
+3. Run `npm run build` to build the plain JS application
+4. Run `npm start`
+5. Hit the server to test health `curl localhost:8010/health` and expect a `200` response
 
 ## Testing
 
@@ -56,3 +57,5 @@ Dev Dependencies
 - nyc v15.1.0
 - pre-push v0.1.1
 - supertest v4.0.2
+- typescript v4.5.2
+- ts-node v10.4.0
