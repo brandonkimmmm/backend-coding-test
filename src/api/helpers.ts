@@ -1,23 +1,30 @@
-'use strict';
+import P from 'bluebird';
+import { db } from '../tools/database';
+import { CreateRideSchema, GetRidesSchema, GetRideSchema } from '../tools/schemas';
 
-const { db } = require('../tools/database');
-const Promise = require('bluebird');
-const { rideSchema, paginationSchema, rideIdSchema } = require('../tools/schemas');
+export interface Ride {
+	rideID: number;
+	created: string;
+	startLat: number;
+	startLong: number;
+	endLat: number;
+	endLong: number;
+	riderName: string;
+	driverName: string;
+	driverVehicle: string;
+}
 
-const createRide = (
-	start_lat,
-	start_long,
-	end_lat,
-	end_long,
-	rider_name,
-	driver_name,
-	driver_vehicle,
-	opts = {
-		returning: true
-	}
-) => {
-	return new Promise((resolve, reject) => {
-		const validation = rideSchema.validate({
+export const createRide = (
+	start_lat: number,
+	start_long: number,
+	end_lat: number,
+	end_long: number,
+	rider_name: string,
+	driver_name: string,
+	driver_vehicle: string,
+): Promise<Ride> => {
+	return new P((resolve, reject) => {
+		const validation = CreateRideSchema.validate({
 			start_lat,
 			start_long,
 			end_lat,
@@ -28,7 +35,7 @@ const createRide = (
 		});
 
 		if (validation.error) {
-			return reject(new Error(validation.error));
+			return reject(new Error(validation.error.message));
 		}
 
 		db.run(
@@ -47,10 +54,6 @@ const createRide = (
 					return reject(err);
 				}
 
-				if (!opts.returning) {
-					return resolve(this.lastID);
-				}
-
 				db.get('SELECT * FROM Rides WHERE rideID = ?', this.lastID, (err, data) => {
 					if (err) {
 						return reject(err);
@@ -62,33 +65,22 @@ const createRide = (
 	});
 };
 
-const countRides = async () => {
+export const countRides = async (): Promise<number> => {
 	const { count } = await db.getAsync('SELECT COUNT(RideID) AS count FROM Rides');
-
 	return count;
 };
 
-const getPaginatedRides = async (limit = 50, page = 1) => {
-	await paginationSchema.validateAsync({ limit, page });
-
+export const getPaginatedRides = async (limit = 50, page = 1): Promise<Ride[]> => {
+	await GetRidesSchema.validateAsync({ limit, page });
 	const offset = limit * (page - 1);
 
 	const rows = await db.allAsync('SELECT * FROM Rides ORDER BY rideID DESC LIMIT ? OFFSET ?', [limit, offset]);
-
 	return rows;
 };
 
-const getRide = async (id) => {
-	await rideIdSchema.validateAsync({ id });
+export const getRide = async (id: number): Promise<Ride | undefined> => {
+	await GetRideSchema.validateAsync({ id });
 
 	const ride = await db.getAsync('SELECT * FROM Rides WHERE rideID=?', id);
-
 	return ride;
-};
-
-module.exports = {
-	createRide,
-	countRides,
-	getPaginatedRides,
-	getRide
 };

@@ -1,0 +1,29 @@
+{
+	"ts-node": {
+		"files": true
+	},
+	"compilerOptions": {
+		"target": "es6",
+		"module": "commonjs",
+		"lib": ["es6"],
+		"strict": true,
+		"typeRoots": [
+			"@types",
+			"node_modules/@types"
+		],
+		"esModuleInterop": true
+	},
+	"include": [
+		"src/*.ts",
+		"src/**/*.ts",
+		"tests/*.ts",
+		"tests/helpers/mockdata.ts"
+	],
+	"exclude": [
+		"node_modules",
+		"build"
+	],
+	"files": [
+		"@types/express/custom.d.ts"
+	]
+}

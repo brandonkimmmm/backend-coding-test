@@ -11,7 +11,7 @@ config:
           arrivalRate: 20
       plugins:
         expect: {}
-  processor: ./mockdata.js
+  processor: ./helpers/artilleryProcessor.js
   phases:
     - duration: 30
       arrivalRate: 100
